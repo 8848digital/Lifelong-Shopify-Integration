@@ -63,7 +63,7 @@ def prepare_shopify_product(item_doc, method):
         
     if method == "on_update":
         product["product"]["variants"] = [variant]
-    if method == "on_trash":
+    if item_doc.disabled == 1:
         product["product"]['status'] = 'draft'
     else:
         variant["price"] = 100
@@ -97,18 +97,14 @@ def push_item_to_shopify(item_code, method):
     
     if shopify_product:
         product_id = shopify_product["id"]
-        if method == 'on_trash':
-            url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products/{product_id.split('/')[-1]}.json"
-            response = requests.delete(url, headers=get_shopify_headers())
+        update_url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products/{product_id.split('/')[-1]}.json"
+        
+        response = requests.put(update_url, headers=get_shopify_headers(), data=json.dumps(product_payload))
+        
+        if response.status_code == 200:
+            frappe.msgprint(f"Shopify product UPDATED for {item_code}")
         else:
-            update_url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products/{product_id.split('/')[-1]}.json"
-            
-            response = requests.put(update_url, headers=get_shopify_headers(), data=json.dumps(product_payload))
-            
-            if response.status_code == 200:
-                frappe.msgprint(f"Shopify product UPDATED for {item_code}")
-            else:
-                frappe.throw(f"Error updating Shopify product: {response.status_code} {response.text}")
+            frappe.throw(f"Error updating Shopify product: {response.status_code} {response.text}")
     else:
         url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products.json"
         response = requests.post(url, headers=get_shopify_headers(), data=json.dumps(product_payload))
