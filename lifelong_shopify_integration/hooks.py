@@ -137,32 +137,42 @@ app_license = "mit"
 # ---------------
 # Hook on document methods and events
 
-# doc_events = {
-# 	"*": {
-# 		"on_update": "method",
-# 		"on_cancel": "method",
-# 		"on_trash": "method"
-# 	}
-# }
+doc_events = {
+	"Item": {
+        "after_insert": "lifelong_shopify_integration.lifelong_shopify_integration.customizations.item.insert_after",
+        "on_update" : "lifelong_shopify_integration.lifelong_shopify_integration.customizations.item.update",
+        "on_trash" : "lifelong_shopify_integration.lifelong_shopify_integration.customizations.item.delete",
+	},
+    # "Custom Field": {
+    #     "after_insert": "lifelong_shopify_integration.lifelong_shopify_integration.customizations.custom_fields.insert_after",
+    #     "on_update" : "lifelong_shopify_integration.lifelong_shopify_integration.customizations.custom_fields.update",
+    #     "on_trash" : "lifelong_shopify_integration.lifelong_shopify_integration.customizations.custom_fields.delete",
+    #     "after_rename": "lifelong_shopify_integration.lifelong_shopify_integration.customizations.custom_fields.after_rename",
+    # },
+    # "Sync Status Log": {
+    #     "on_submit": "lifelong_shopify_integration.lifelong_shopify_integration.doctype.sync_status_log.sync_status_log.insert_after",
+    # },
+}
 
 # Scheduled Tasks
 # ---------------
 
 # scheduler_events = {
 # 	"all": [
-# 		"lifelong_shopify_integration.tasks.all"
+# 		"ehc_customization.tasks.all"
 # 	],
-# 	"daily": [
-# 		"lifelong_shopify_integration.tasks.daily"
-# 	],
+    # "daily": [
+    #     "lifelong_shopify_integration.lifelong_shopify_integration.customizations.doc_events.utility_functions.call_event_streaming",
+    #     "lifelong_shopify_integration.lifelong_shopify_integration.customizations.doc_events.utility_functions.sync_between_servers"
+    # ],
 # 	"hourly": [
-# 		"lifelong_shopify_integration.tasks.hourly"
+# 		"ehc_customization.tasks.hourly"
 # 	],
 # 	"weekly": [
-# 		"lifelong_shopify_integration.tasks.weekly"
+# 		"ehc_customization.tasks.weekly"
 # 	],
 # 	"monthly": [
-# 		"lifelong_shopify_integration.tasks.monthly"
+# 		"ehc_customization.tasks.monthly"
 # 	],
 # }
 
@@ -242,3 +252,5 @@ app_license = "mit"
 # 	"Logging DocType Name": 30  # days to retain logs
 # }
 
+fixtures = [
+    {"doctype": "Custom Field", "filters": {"module": "Lifelong Shopify Integration"}},]

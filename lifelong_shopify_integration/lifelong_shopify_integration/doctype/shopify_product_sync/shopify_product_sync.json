@@ -1,0 +1,54 @@
+{
+ "actions": [],
+ "allow_rename": 1,
+ "creation": "2025-06-19 13:18:13.423369",
+ "default_view": "List",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "shopify_url",
+  "column_break_my5s",
+  "shopify_token"
+ ],
+ "fields": [
+  {
+   "fieldname": "column_break_my5s",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "shopify_url",
+   "fieldtype": "Data",
+   "label": "Shopify URL"
+  },
+  {
+   "fieldname": "shopify_token",
+   "fieldtype": "Password",
+   "label": "Shopify Token"
+  }
+ ],
+ "grid_page_length": 50,
+ "index_web_pages_for_search": 1,
+ "issingle": 1,
+ "links": [],
+ "modified": "2025-06-19 13:19:01.313995",
+ "modified_by": "Administrator",
+ "module": "Lifelong Shopify Integration",
+ "name": "Shopify Product Sync",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "modified",
+ "sort_order": "DESC",
+ "states": []
+}
