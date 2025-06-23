@@ -6,9 +6,16 @@
  "doctype": "DocType",
  "engine": "InnoDB",
  "field_order": [
+  "shopify_connector_section",
   "shopify_url",
   "column_break_my5s",
-  "shopify_token"
+  "shopify_token",
+  "section_break_edrn",
+  "target_url",
+  "price_list",
+  "column_break_nbkw",
+  "target_user",
+  "secret_key"
  ],
  "fields": [
   {
@@ -24,13 +31,50 @@
    "fieldname": "shopify_token",
    "fieldtype": "Password",
    "label": "Shopify Token"
+  },
+  {
+   "fieldname": "section_break_edrn",
+   "fieldtype": "Section Break",
+   "label": "Lifelong Erp Connector"
+  },
+  {
+   "fieldname": "target_url",
+   "fieldtype": "Data",
+   "label": "Target URL"
+  },
+  {
+   "fieldname": "column_break_nbkw",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "target_user",
+   "fieldtype": "Data",
+   "label": "Target User"
+  },
+  {
+   "fieldname": "secret_key",
+   "fieldtype": "Password",
+   "label": "Secret Key"
+  },
+  {
+   "fieldname": "shopify_connector_section",
+   "fieldtype": "Section Break",
+   "label": "Shopify Connector"
+  },
+  {
+   "fieldname": "price_list",
+   "fieldtype": "Link",
+   "in_list_view": 1,
+   "label": "Price List",
+   "options": "Price List",
+   "reqd": 1
   }
  ],
  "grid_page_length": 50,
  "index_web_pages_for_search": 1,
  "issingle": 1,
  "links": [],
- "modified": "2025-06-19 13:19:01.313995",
+ "modified": "2025-06-23 21:20:31.794452",
  "modified_by": "Administrator",
  "module": "Lifelong Shopify Integration",
  "name": "Shopify Product Sync",

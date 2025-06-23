@@ -24,11 +24,13 @@ def site_details():
     docSettings = frappe.get_single("Shopify Product Sync")
     shopify_token = docSettings.get_password('shopify_token')
     shopify_url = shopify_records.shopify_url
+    price_list = docSettings.price_list
     
-    return shopify_token, shopify_url
+    return shopify_token, shopify_url, price_list
 
 
-SHOPIFY_ACCESS_TOKEN, SHOPIFY_STORE_URL= site_details()
+SHOPIFY_ACCESS_TOKEN, SHOPIFY_STORE_URL, price_list= site_details()
+
 
 def get_shopify_headers():
     return {
@@ -62,11 +64,36 @@ def prepare_shopify_product(item_doc, method):
     }
         
     if method == "on_update":
+        existing_price = frappe.get_all(
+            "Item Price",
+            filters={
+                "item_code": item_doc.item_code,
+                "price_list": price_list,
+            },
+            fields=["name", "price_list_rate", "valid_from", "modified"],
+            order_by="valid_from desc, modified desc",
+            limit=1
+        )
+        if existing_price:
+            variant["price"] = existing_price[0]['price_list_rate']
         product["product"]["variants"] = [variant]
     if item_doc.disabled == 1:
         product["product"]['status'] = 'draft'
     else:
-        variant["price"] = 100
+        existing_price = frappe.get_all(
+            "Item Price",
+            filters={
+                "item_code": item_doc.item_code,
+                "price_list": price_list,
+            },
+            fields=["name", "price_list_rate", "valid_from", "modified"],
+            order_by="valid_from desc, modified desc",
+            limit=1
+        )
+        if existing_price:
+            variant["price"] = existing_price[0]['price_list_rate']
+        else:
+            variant["price"] = 100
         product["product"]['status'] = 'draft'
         product["product"]["variants"] = [variant]
 

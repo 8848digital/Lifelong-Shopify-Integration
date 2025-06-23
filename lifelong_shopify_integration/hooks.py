@@ -157,24 +157,30 @@ doc_events = {
 # Scheduled Tasks
 # ---------------
 
-# scheduler_events = {
-# 	"all": [
-# 		"ehc_customization.tasks.all"
-# 	],
+scheduler_events = {
+
+	# "all": [
+	# 	"ehc_customization.tasks.all"
+	# ],
     # "daily": [
     #     "lifelong_shopify_integration.lifelong_shopify_integration.customizations.doc_events.utility_functions.call_event_streaming",
     #     "lifelong_shopify_integration.lifelong_shopify_integration.customizations.doc_events.utility_functions.sync_between_servers"
     # ],
-# 	"hourly": [
-# 		"ehc_customization.tasks.hourly"
-# 	],
-# 	"weekly": [
-# 		"ehc_customization.tasks.weekly"
-# 	],
-# 	"monthly": [
-# 		"ehc_customization.tasks.monthly"
-# 	],
-# }
+	# "hourly": [
+	# 	"ehc_customization.tasks.hourly"
+	# ],
+	# "weekly": [
+	# 	"ehc_customization.tasks.weekly"
+	# ],
+	# "monthly": [
+	# 	"ehc_customization.tasks.monthly"
+	# ],
+    "cron": {
+        "*/30 * * * *": [
+            "lifelong_shopify_integration.lifelong_shopify_integration.utils.sync_price_list.sync_bsr"
+        ]
+    }
+}
 
 # Testing
 # -------
