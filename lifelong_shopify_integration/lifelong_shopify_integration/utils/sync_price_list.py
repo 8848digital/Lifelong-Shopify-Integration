@@ -2,6 +2,7 @@ import frappe
 import requests
 import json
 from lifelong_shopify_integration.lifelong_shopify_integration.customizations.item import push_item_to_shopify
+import datetime
 
 def site_details():
     docSettings = frappe.get_single("Shopify Product Sync")
@@ -43,17 +44,19 @@ def sync_bsr():
             )
             return
 
-        
+        two_days_ago = (datetime.datetime.today() - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
+
         for item in get_sync_item:
             get_doc = frappe.get_doc('Item', item['name'])
             if get_doc.customer_items:
                 ref_codes = []
+                price_created = False
                 for code in get_doc.customer_items:
                     bsin_value = code.ref_code
                     if bsin_value not in ref_codes:
                         ref_codes.append(bsin_value)
 
-                        bsr_url = f"{target_url}/api/resource/BSR?limit_page_length=1000&fields=[\"*\"]&order_by=date desc"
+                        bsr_url = f'{target_url}/api/resource/BSR?limit_page_length=20&fields=["*"]&order_by=date desc&filters=[["date", ">=", "{two_days_ago}"]]'
 
                         bsr_response = session.get(bsr_url)
 
@@ -88,20 +91,25 @@ def sync_bsr():
                                                 price_doc.save()
                                                 frappe.db.commit()
                                                 push_item_to_shopify(get_doc.item_code, "on_update")
+                                                price_created = True
 
-                                            break 
+                                                break 
 
                                 else:
                                     frappe.log_error(
                                         title="BSR Fetch Failed",
                                         message=f"Failed to fetch BSR {bsr_name}: {detail_response.status_code} - {detail_response.text}"
-                                    )                       
+                                    ) 
+                                if price_created:
+                                    break                      
 
                         else:
                             frappe.log_error(
                                 title="BSR Parent List Fetch Failed",
                                 message=f"Failed to fetch BSR parent list: {bsr_response.status_code} - {bsr_response.text}"
                             )
+                        if price_created:
+                            break
 
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "sync_bsr: Error during API call")

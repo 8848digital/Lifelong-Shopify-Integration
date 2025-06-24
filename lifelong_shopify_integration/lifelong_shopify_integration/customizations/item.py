@@ -58,10 +58,12 @@ def prepare_shopify_product(item_doc, method):
             "title": item_doc.item_name,
             "body_html": item_doc.description or "",
             "vendor": item_doc.brand or "",
-            "product_type": item_doc.item_group,
-            "tags": f"ERPNext, {item_doc.item_group}, {item_doc.brand}",
+            "product_type": frappe.db.get_value('Item Group', item_doc.item_group, 'custom_shopify_item_group_abbreviation') or item_doc.item_group
         }
     }
+    tags_list = ["ERPNext", item_doc.item_group, item_doc.brand]
+    if item_doc.sku_classification == 'Head':
+        product["product"]['tags'] = 'Bestseller'
         
     if method == "on_update":
         existing_price = frappe.get_all(
@@ -76,7 +78,13 @@ def prepare_shopify_product(item_doc, method):
         )
         if existing_price:
             variant["price"] = existing_price[0]['price_list_rate']
+        if variant["price"] <= (0.5 * item_doc.mrp):
+            tags_list.append("Discount")
+        if variant["price"] > (0.7 * item_doc.mrp):
+            tags_list.append("Sales/Offer")
+
         product["product"]["variants"] = [variant]
+
     if item_doc.disabled == 1:
         product["product"]['status'] = 'draft'
     else:
@@ -94,9 +102,16 @@ def prepare_shopify_product(item_doc, method):
             variant["price"] = existing_price[0]['price_list_rate']
         else:
             variant["price"] = 100
+        if variant["price"] <= (0.5 * item_doc.mrp):
+            tags_list.append("Discount")
+        if variant["price"] > (0.7 * item_doc.mrp):
+            tags_list.append("Sales/Offer")
+
         product["product"]['status'] = 'draft'
         product["product"]["variants"] = [variant]
 
+    tags_string = ", ".join(tags_list)
+    product["product"]['tags'] = tags_string
 
     return product
 
