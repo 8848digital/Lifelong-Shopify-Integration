@@ -63,7 +63,7 @@ def prepare_shopify_product(item_doc, method):
     }
     tags_list = ["ERPNext", item_doc.item_group, item_doc.brand]
     if item_doc.sku_classification == 'Head':
-        product["product"]['tags'] = 'Bestseller'
+        tags_list.append('Bestseller')
         
     if method == "on_update":
         existing_price = frappe.get_all(
