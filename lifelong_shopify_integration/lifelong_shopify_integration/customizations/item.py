@@ -78,9 +78,9 @@ def prepare_shopify_product(item_doc, method):
         )
         if existing_price:
             variant["price"] = existing_price[0]['price_list_rate']
-        if variant["price"] <= (0.5 * item_doc.mrp):
+        if variant["price"] <= (0.5 * item_doc.mrp) and item_doc.sku_classification != 'Head':
             tags_list.append("Discount")
-        if variant["price"] > (0.7 * item_doc.mrp):
+        if variant["price"] > (0.7 * item_doc.mrp) and item_doc.sku_classification != 'Head':
             tags_list.append("Sales/Offer")
 
         product["product"]["variants"] = [variant]
@@ -102,9 +102,9 @@ def prepare_shopify_product(item_doc, method):
             variant["price"] = existing_price[0]['price_list_rate']
         else:
             variant["price"] = 100
-        if variant["price"] <= (0.5 * item_doc.mrp):
+        if variant["price"] <= (0.5 * item_doc.mrp) and item_doc.sku_classification != 'Head':
             tags_list.append("Discount")
-        if variant["price"] > (0.7 * item_doc.mrp):
+        if variant["price"] > (0.7 * item_doc.mrp) and item_doc.sku_classification != 'Head':
             tags_list.append("Sales/Offer")
 
         product["product"]['status'] = 'draft'

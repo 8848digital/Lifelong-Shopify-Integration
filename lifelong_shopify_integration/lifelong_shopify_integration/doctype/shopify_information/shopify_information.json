@@ -85,10 +85,10 @@
    "label": "Model Name"
   },
   {
-   "default": "0",
    "fieldname": "is_dishwasher_safe",
-   "fieldtype": "Check",
-   "label": "Is Dishwasher Safe"
+   "fieldtype": "Select",
+   "label": "Is Dishwasher Safe",
+   "options": "\nYes\nNo"
   },
   {
    "fieldname": "about_this_item",
@@ -100,7 +100,7 @@
  "index_web_pages_for_search": 1,
  "istable": 1,
  "links": [],
- "modified": "2025-06-23 20:55:00.910497",
+ "modified": "2025-06-24 15:39:50.165035",
  "modified_by": "Administrator",
  "module": "Lifelong Shopify Integration",
  "name": "Shopify Information",
