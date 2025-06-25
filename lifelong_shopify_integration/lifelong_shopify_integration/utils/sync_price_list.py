@@ -47,69 +47,75 @@ def sync_bsr():
         two_days_ago = (datetime.datetime.today() - datetime.timedelta(days=1)).strftime("%Y-%m-%d")
 
         for item in get_sync_item:
-            get_doc = frappe.get_doc('Item', item['name'])
-            if get_doc.customer_items:
-                ref_codes = []
-                price_created = False
-                for code in get_doc.customer_items:
-                    bsin_value = code.ref_code
-                    if bsin_value not in ref_codes:
-                        ref_codes.append(bsin_value)
+            try:
+                get_doc = frappe.get_doc('Item', item['name'])
+                if get_doc.customer_items:
+                    ref_codes = []
+                    price_created = False
+                    for code in get_doc.customer_items:
+                        bsin_value = code.ref_code
+                        if bsin_value not in ref_codes:
+                            ref_codes.append(bsin_value)
 
-                        bsr_url = f'{target_url}/api/resource/BSR?limit_page_length=20&fields=["*"]&order_by=date desc&filters=[["date", ">=", "{two_days_ago}"]]'
+                            bsr_url = f'{target_url}/api/resource/BSR?limit_page_length=20&fields=["*"]&order_by=date desc&filters=[["date", ">=", "{two_days_ago}"]]'
 
-                        bsr_response = session.get(bsr_url)
+                            bsr_response = session.get(bsr_url)
 
-                        if bsr_response.status_code == 200:
-                            bsr_parents = bsr_response.json().get("data", [])
+                            if bsr_response.status_code == 200:
+                                bsr_parents = bsr_response.json().get("data", [])
 
-                            for bsr in bsr_parents:
-                                bsr_name = bsr["name"]
+                                for bsr in bsr_parents:
+                                    bsr_name = bsr["name"]
 
-                                bsr_detail_url = f"{target_url}/api/resource/BSR/{bsr_name}"
-                                detail_response = session.get(bsr_detail_url)
+                                    bsr_detail_url = f"{target_url}/api/resource/BSR/{bsr_name}"
+                                    detail_response = session.get(bsr_detail_url)
 
-                                if detail_response.status_code == 200:
-                                    bsr_doc = detail_response.json().get("data", {})
-                                    child_rows = bsr_doc.get("bsr_items", [])
+                                    if detail_response.status_code == 200:
+                                        bsr_doc = detail_response.json().get("data", {})
+                                        child_rows = bsr_doc.get("bsr_items", [])
 
-                                    for row in child_rows:
-                                        if row.get("request_asin") == bsin_value:
-                                            existing_price = frappe.db.exists("Item Price", {
-                                                "item_code": get_doc.item_code,
-                                                "price_list": price_list,
-                                                "valid_from": bsr["date"]
-                                            })
+                                        for row in child_rows:
+                                            if row.get("request_asin") == bsin_value:
+                                                existing_price = frappe.db.exists("Item Price", {
+                                                    "item_code": get_doc.item_code,
+                                                    "price_list": price_list,
+                                                    "valid_from": bsr["date"]
+                                                })
 
-                                            if not existing_price:
-                                                price_doc = frappe.new_doc("Item Price")
-                                                price_doc.item_code = get_doc.item_code
-                                                price_doc.price_list = price_list
-                                                price_doc.price_list_rate = row.get("rrp_value")
-                                                price_doc.currency = "INR"
-                                                price_doc.valid_from = bsr["date"]
-                                                price_doc.save()
-                                                frappe.db.commit()
-                                                push_item_to_shopify(get_doc.item_code, "on_update")
-                                                price_created = True
+                                                if not existing_price:
+                                                    price_doc = frappe.new_doc("Item Price")
+                                                    price_doc.item_code = get_doc.item_code
+                                                    price_doc.price_list = price_list
+                                                    price_doc.price_list_rate = row.get("rrp_value")
+                                                    price_doc.currency = "INR"
+                                                    price_doc.valid_from = bsr["date"]
+                                                    price_doc.save()
+                                                    frappe.db.commit()
+                                                    push_item_to_shopify(get_doc.item_code, "on_update")
+                                                    price_created = True
 
-                                                break 
+                                                    break 
 
-                                else:
-                                    frappe.log_error(
-                                        title="BSR Fetch Failed",
-                                        message=f"Failed to fetch BSR {bsr_name}: {detail_response.status_code} - {detail_response.text}"
-                                    ) 
-                                if price_created:
-                                    break                      
+                                    else:
+                                        frappe.log_error(
+                                            title="BSR Fetch Failed",
+                                            message=f"Failed to fetch BSR {bsr_name}: {detail_response.status_code} - {detail_response.text}"
+                                        ) 
+                                    if price_created:
+                                        break                      
 
-                        else:
-                            frappe.log_error(
-                                title="BSR Parent List Fetch Failed",
-                                message=f"Failed to fetch BSR parent list: {bsr_response.status_code} - {bsr_response.text}"
-                            )
-                        if price_created:
-                            break
+                            else:
+                                frappe.log_error(
+                                    title="BSR Parent List Fetch Failed",
+                                    message=f"Failed to fetch BSR parent list: {bsr_response.status_code} - {bsr_response.text}"
+                                )
+                            if price_created:
+                                break
+            except Exception as err:
+                frappe.log_error(
+                title="sync_bsr: Error in Item Loop",
+                message=f"{frappe.get_traceback()}"
+                )
 
     except Exception as e:
         frappe.log_error(frappe.get_traceback(), "sync_bsr: Error during API call")
