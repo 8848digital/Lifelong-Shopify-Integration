@@ -67,7 +67,7 @@ def prepare_shopify_product(item_doc, method):
             "product_type": frappe.db.get_value('Item Group', item_doc.item_group, 'custom_shopify_item_group_abbreviation') or item_doc.item_group
         }
     }
-    tags_list = ["ERPNext", item_doc.item_group, item_doc.brand]
+    tags_list = ["ERPNext", item_doc.item_group, item_doc.brand, item_doc.sub_catergory]
     if item_doc.sku_classification == 'Head':
         tags_list.append('Bestseller')
         
@@ -82,44 +82,57 @@ def prepare_shopify_product(item_doc, method):
             order_by="valid_from desc, modified desc",
             limit=1
         )
-        if existing_price:
-            variant["price"] = existing_price[0]['price_list_rate']
-        if variant["price"] <= (0.5 * item_doc.mrp) and item_doc.sku_classification != 'Head':
-            tags_list.append("Discount")
-        if variant["price"] > (0.7 * item_doc.mrp) and item_doc.sku_classification != 'Head':
-            tags_list.append("Sales/Offer")
+        shopify_product = find_product_by_sku(item_doc.item_code)
 
-        product["product"]["variants"] = [variant]
+        if not shopify_product:
+            product, tags_list, variant = set_new_entry(item_doc, variant, product, tags_list)
+        else:
+            if existing_price:
+                variant["price"] = existing_price[0]['price_list_rate']
+            elif shopify_product:
+                variant["price"] = shopify_product['variants']['edges'][0]['node']['price']
+
+            if variant["price"] <= (0.5 * float(item_doc.mrp)) and item_doc.sku_classification != 'Head':
+                tags_list.append("Discount")
+            if variant["price"] > (0.7 * float(item_doc.mrp)) and item_doc.sku_classification != 'Head':
+                tags_list.append("Sales/Offer")
+
+            product["product"]["variants"] = [variant]
 
     if item_doc.disabled == 1:
         product["product"]['status'] = 'draft'
-    else:
-        existing_price = frappe.get_all(
-            "Item Price",
-            filters={
-                "item_code": item_doc.item_code,
-                "price_list": price_list,
-            },
-            fields=["name", "price_list_rate", "valid_from", "modified"],
-            order_by="valid_from desc, modified desc",
-            limit=1
-        )
-        if existing_price:
-            variant["price"] = existing_price[0]['price_list_rate']
-        else:
-            variant["price"] = 100
-        if variant["price"] <= (0.5 * item_doc.mrp) and item_doc.sku_classification != 'Head':
-            tags_list.append("Discount")
-        if variant["price"] > (0.7 * item_doc.mrp) and item_doc.sku_classification != 'Head':
-            tags_list.append("Sales/Offer")
-
-        product["product"]['status'] = 'draft'
-        product["product"]["variants"] = [variant]
+    if method == "after_insert":
+        product, tags_list = set_new_entry(item_doc, variant, product, tags_list)
 
     tags_string = ", ".join(tags_list)
     product["product"]['tags'] = tags_string
 
     return product
+
+def set_new_entry(item_doc, variant, product, tags_list):
+    existing_price = frappe.get_all(
+        "Item Price",
+        filters={
+            "item_code": item_doc.item_code,
+            "price_list": price_list,
+        },
+        fields=["name", "price_list_rate", "valid_from", "modified"],
+        order_by="valid_from desc, modified desc",
+        limit=1
+    )
+    if existing_price:
+        variant["price"] = existing_price[0]['price_list_rate']
+    else:
+        variant["price"] = 100
+    if variant["price"] <= (0.5 * float(item_doc.mrp)) and item_doc.sku_classification != 'Head':
+        tags_list.append("Discount")
+    if variant["price"] > (0.7 * float(item_doc.mrp)) and item_doc.sku_classification != 'Head':
+        tags_list.append("Sales/Offer")
+
+    product["product"]['status'] = 'draft'
+    product["product"]["variants"] = [variant]
+
+    return product, tags_list, variant
 
 def get_stock_qty(item_code):
     stock = frappe.db.get_value("Bin", {"item_code": item_code}, "actual_qty")
@@ -136,11 +149,42 @@ def get_barcode(item_code):
         return result[0]["barcode"]
     return ""
 
+def generate_shopify_info_html(item_doc):
+    if not item_doc.custom_shopify_information:
+        return ""
+
+    html = "<table border='1' style='border-collapse: collapse;'>"
+    html += "<tr><th>Attribute</th><th>Value</th></tr>"
+
+    for row in item_doc.custom_shopify_information:
+        fields_to_include = [
+            ("Brand", row.brand),
+            ("Colour", row.colour),
+            ("Product Dimensions", row.product_dimensions),
+            ("Blade Material", row.blade_material),
+            ("Special Feature", row.special_feature),
+            ("Capacity", row.capacity),
+            ("Control Type", row.control_type),
+            ("Item Weight", row.item_weight),
+            ("Model Name", row.model_name),
+            ("Dishwasher Safe", row.is_dishwasher_safe),
+            ("About This Item", row.about_this_item)
+        ]
+        for label, value in fields_to_include:
+            if value:
+                html += f"<tr><td>{label}</td><td>{value}</td></tr>"
+
+    html += "</table>"
+    return html
+
 def push_item_to_shopify(item_code, method):
     item_doc = frappe.get_doc("Item", item_code)
     product_payload = prepare_shopify_product(item_doc, method)
 
     shopify_product = find_product_by_sku(item_doc.item_code)
+
+    informations = generate_shopify_info_html(item_doc)
+
 
     
     if shopify_product:
@@ -151,6 +195,20 @@ def push_item_to_shopify(item_code, method):
         
         if response.status_code == 200:
             frappe.msgprint(f"Shopify product UPDATED for {item_code}")
+            metafield_url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products/{product_id.split('/')[-1]}/metafields.json"
+            metafield_update = requests.get(metafield_url, headers=get_shopify_headers())
+            if metafield_update.status_code == 200:
+                metafield_id = metafield_update.json()["metafields"][0]["id"]
+                metafield_update_url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/metafields/{metafield_id}.json"
+                payload = {
+                    "metafield": {
+                        "id": metafield_id,
+                        "value": informations,
+                        "type": "multi_line_text_field"
+                    }
+                }
+                response = requests.put(metafield_update_url, headers=get_shopify_headers(), data=json.dumps(payload))
+
         else:
             frappe.throw(f"Error updating Shopify product: {response.status_code} {response.text}")
     else:
@@ -159,6 +217,19 @@ def push_item_to_shopify(item_code, method):
         
         if response.status_code == 201:
             frappe.msgprint(f"Shopify product created for {item_code}")
+            product_data = response.json()["product"]
+            product_id = product_data["id"]
+            metafield = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products/{product_id}/metafields.json"
+            meta_payload = {
+                "metafield": {
+                    "namespace": "custom",
+                    "key": "specifications",
+                    "value": informations,
+                    "type": "multi_line_text_field"
+                }
+            }
+            metafield_creation = requests.post(metafield, headers=get_shopify_headers(), data=json.dumps(meta_payload))
+
         else:
             frappe.throw(f"Error pushing to Shopify: {response.status_code} {response.text}")
 
@@ -178,6 +249,7 @@ def find_product_by_sku(sku):
                   id
                   sku
                   inventoryQuantity
+                  price
                 }
               }
             }
