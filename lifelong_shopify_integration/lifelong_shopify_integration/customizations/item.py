@@ -153,8 +153,16 @@ def generate_shopify_info_html(item_doc):
     if not item_doc.custom_shopify_information:
         return ""
 
-    html = "<table border='1' style='border-collapse: collapse;'>"
-    html += "<tr><th>Attribute</th><th>Value</th></tr>"
+    html = """
+    <table style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 14px;">
+        <thead>
+            <tr style="background-color: #f2f2f2;">
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Attribute</th>
+                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Value</th>
+            </tr>
+        </thead>
+        <tbody>
+    """
 
     for row in item_doc.custom_shopify_information:
         fields_to_include = [
@@ -170,11 +178,17 @@ def generate_shopify_info_html(item_doc):
             ("Dishwasher Safe", row.is_dishwasher_safe),
             ("About This Item", row.about_this_item)
         ]
-        for label, value in fields_to_include:
+        for i, (label, value) in enumerate(fields_to_include):
             if value:
-                html += f"<tr><td>{label}</td><td>{value}</td></tr>"
+                row_style = "background-color: #f9f9f9;" if i % 2 else ""
+                html += f"""
+                <tr style="{row_style}">
+                    <td style="border: 1px solid #ddd; padding: 8px;">{label}</td>
+                    <td style="border: 1px solid #ddd; padding: 8px;">{value}</td>
+                </tr>
+                """
 
-    html += "</table>"
+    html += "</tbody></table>"
     return html
 
 def push_item_to_shopify(item_code, method):
