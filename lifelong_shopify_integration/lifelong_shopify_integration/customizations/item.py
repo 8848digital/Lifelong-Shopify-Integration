@@ -90,7 +90,7 @@ def prepare_shopify_product(item_doc, method):
             if existing_price:
                 variant["price"] = existing_price[0]['price_list_rate']
             elif shopify_product:
-                variant["price"] = shopify_product['variants']['edges'][0]['node']['price']
+                variant["price"] = float(shopify_product['variants']['edges'][0]['node']['price'])
 
             if variant["price"] <= (0.5 * float(item_doc.mrp)) and item_doc.sku_classification != 'Head':
                 tags_list.append("Discount")
