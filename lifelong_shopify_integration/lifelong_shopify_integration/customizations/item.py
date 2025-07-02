@@ -193,6 +193,10 @@ def generate_shopify_info_html(item_doc):
 
 def push_item_to_shopify(item_code, method):
     item_doc = frappe.get_doc("Item", item_code)
+
+    if item_doc.weight_uom == 'KGS':
+        item_doc.weight_uom = 'kg'
+        
     product_payload = prepare_shopify_product(item_doc, method)
 
     shopify_product = find_product_by_sku(item_doc.item_code)
