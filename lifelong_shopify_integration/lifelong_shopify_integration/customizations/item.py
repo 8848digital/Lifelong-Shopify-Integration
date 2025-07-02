@@ -67,7 +67,7 @@ def prepare_shopify_product(item_doc, method):
             "product_type": frappe.db.get_value('Item Group', item_doc.item_group, 'custom_shopify_item_group_abbreviation') or item_doc.item_group
         }
     }
-    tags_list = ["ERPNext", item_doc.item_group, item_doc.brand, item_doc.sub_catergory]
+    tags_list = ["ERPNext", product["product"]['product_type'], item_doc.brand, item_doc.sub_catergory]
     if item_doc.sku_classification == 'Head':
         tags_list.append('Bestseller')
         
