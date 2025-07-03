@@ -155,12 +155,7 @@ def generate_shopify_info_html(item_doc):
 
     html = """
     <table style="border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 14px;">
-        <thead>
-            <tr style="background-color: #f2f2f2;">
-                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Attribute</th>
-                <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Value</th>
-            </tr>
-        </thead>
+        
         <tbody>
     """
 
