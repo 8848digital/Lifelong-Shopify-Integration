@@ -216,16 +216,19 @@ def push_item_to_shopify(item_code, method):
             metafield_url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products/{product_id.split('/')[-1]}/metafields.json"
             metafield_update = requests.get(metafield_url, headers=get_shopify_headers())
             if metafield_update.status_code == 200:
-                metafield_id = metafield_update.json()["metafields"][0]["id"]
-                metafield_update_url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/metafields/{metafield_id}.json"
-                payload = {
-                    "metafield": {
-                        "id": metafield_id,
-                        "value": informations,
-                        "type": "multi_line_text_field"
+                try:
+                    metafield_id = metafield_update.json()["metafields"][0]["id"]
+                    metafield_update_url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/metafields/{metafield_id}.json"
+                    payload = {
+                        "metafield": {
+                            "id": metafield_id,
+                            "value": informations,
+                            "type": "multi_line_text_field"
+                        }
                     }
-                }
-                response = requests.put(metafield_update_url, headers=get_shopify_headers(), data=json.dumps(payload))
+                    response = requests.put(metafield_update_url, headers=get_shopify_headers(), data=json.dumps(payload))
+                except:
+                    pass
 
         else:
             frappe.throw(f"Error updating Shopify product: {response.status_code} {response.text}")

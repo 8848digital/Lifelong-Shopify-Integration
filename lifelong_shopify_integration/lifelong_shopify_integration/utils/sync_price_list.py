@@ -81,10 +81,26 @@ def sync_bsr():
                                                         existing_price = frappe.db.exists("Item Price", {
                                                             "item_code": get_doc.item_code,
                                                             "price_list": price_list,
-                                                            "valid_from": bsr["date"]
+                                                            "valid_from": bsr["date"],
                                                         })
 
-                                                        if not existing_price:
+                                                        if existing_price:
+                                                            check_rate = frappe.db.exists("Item Price", {
+                                                                "item_code": get_doc.item_code,
+                                                                "price_list": price_list,
+                                                                "valid_from": bsr["date"],
+                                                                "price_list_rate": row.get("rrp_value")
+                                                            })
+                                                            if not check_rate:
+                                                                price_doc = frappe.get_doc("Item Price", existing_price)
+                                                                price_doc.price_list_rate = row.get("rrp_value")
+                                                                price_doc.save()
+                                                                frappe.db.commit()
+                                                                push_item_to_shopify(get_doc.item_code, "on_update")
+                                                                price_created = True
+
+
+                                                        elif not existing_price:
                                                             price_doc = frappe.new_doc("Item Price")
                                                             price_doc.item_code = get_doc.item_code
                                                             price_doc.price_list = price_list
