@@ -223,7 +223,16 @@ def push_item_to_shopify(item_code, method):
                     }
                     response = requests.put(metafield_update_url, headers=get_shopify_headers(), data=json.dumps(payload))
                 except:
-                    pass
+                    metafield = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products/{product_id.split('/')[-1]}/metafields.json"
+                    meta_payload = {
+                        "metafield": {
+                            "namespace": "custom",
+                            "key": "specifications",
+                            "value": informations,
+                            "type": "multi_line_text_field"
+                        }
+                    }
+                    metafield_creation = requests.post(metafield, headers=get_shopify_headers(), data=json.dumps(meta_payload))
 
         else:
             frappe.throw(f"Error updating Shopify product: {response.status_code} {response.text}")
