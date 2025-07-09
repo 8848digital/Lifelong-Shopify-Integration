@@ -71,16 +71,15 @@ def execute():
       )
       if not existing_price:
           shopify_product = find_product_by_sku(i.item_code)
-          variant = {}
-          variant["price"] = float(i.mrp) * 0.8
-          
-          product = {
-              "product": {
-                  "variant": variant
+          variant_id = shopify_product["variants"]["edges"][0]["node"]["id"]
+          variant_rest_id = variant_id.split("/")[-1]
+
+          variant_payload = {
+              "variant": {
+                  "id": variant_rest_id,
+                  "price": float(i.mrp) * 0.8
               }
           }
-          if shopify_product:
-              product_id = shopify_product["id"]
-              update_url = f"{a[1]}/admin/api/2024-01/products/{product_id.split('/')[-1]}.json"
-              
-              response = requests.put(update_url, headers=get_shopify_headers(), data=json.dumps(product))
+
+          update_url = f"{a[1]}/admin/api/2024-01/variants/{variant_rest_id}.json"
+          response = requests.put(update_url, headers=get_shopify_headers(), data=json.dumps(variant_payload))
