@@ -123,7 +123,7 @@ def set_new_entry(item_doc, variant, product, tags_list):
     if existing_price:
         variant["price"] = existing_price[0]['price_list_rate']
     else:
-        variant["price"] = 100
+        variant["price"] = float(item_doc.mrp) * 0.8
     if variant["price"] <= (0.5 * float(item_doc.mrp)) and item_doc.sku_classification != 'Head':
         tags_list.append("Discount")
     if variant["price"] > (0.7 * float(item_doc.mrp)) and item_doc.sku_classification != 'Head':
