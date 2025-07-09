@@ -190,6 +190,9 @@ def generate_shopify_info_html(item_doc):
 def push_item_to_shopify(item_code, method):
     item_doc = frappe.get_doc("Item", item_code)
 
+    if float(item_code.mrp) <= 0:
+        frappe.throw(f"Item {item_code} has a MRP of 0 or less. Please update the MRP before syncing to Shopify.")
+
     if item_doc.weight_uom == 'KGS':
         item_doc.weight_uom = 'kg'
         
