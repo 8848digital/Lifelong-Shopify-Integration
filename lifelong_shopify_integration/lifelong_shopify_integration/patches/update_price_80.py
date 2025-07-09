@@ -63,7 +63,7 @@ def execute():
           "Item Price",
           filters={
               "item_code": i.item_code,
-              "price_list":'EBI Lucknow',
+              "price_list":a[2],
           },
           fields=["name", "price_list_rate", "valid_from", "modified"],
           order_by="valid_from desc, modified desc",
