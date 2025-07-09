@@ -189,79 +189,83 @@ def generate_shopify_info_html(item_doc):
 
 def push_item_to_shopify(item_code, method):
     item_doc = frappe.get_doc("Item", item_code)
-
-    if float(item_doc.mrp) <= 0:
-        frappe.throw(f"Item {item_code} has a MRP of 0 or less. Please update the MRP before syncing to Shopify.")
-
-    if item_doc.weight_uom == 'KGS':
-        item_doc.weight_uom = 'kg'
+    try:
+        if float(item_doc.mrp) <= 0:
+            frappe.throw(f"Item {item_code} has a MRP of 0 or less. Please update the MRP before syncing to Shopify.")
         
-    product_payload = prepare_shopify_product(item_doc, method)
+        if item_doc.weight_uom == 'KGS':
+            item_doc.weight_uom = 'kg'
+            
+        product_payload = prepare_shopify_product(item_doc, method)
 
-    shopify_product = find_product_by_sku(item_doc.item_code)
+        shopify_product = find_product_by_sku(item_doc.item_code)
 
-    informations = generate_shopify_info_html(item_doc)
+        informations = generate_shopify_info_html(item_doc)
 
 
-    
-    if shopify_product:
-        product_id = shopify_product["id"]
-        update_url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products/{product_id.split('/')[-1]}.json"
         
-        response = requests.put(update_url, headers=get_shopify_headers(), data=json.dumps(product_payload))
-        
-        if response.status_code == 200:
-            frappe.msgprint(f"Shopify product UPDATED for {item_code}")
-            metafield_url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products/{product_id.split('/')[-1]}/metafields.json"
-            metafield_update = requests.get(metafield_url, headers=get_shopify_headers())
-            if metafield_update.status_code == 200:
-                try:
-                    metafield_id = metafield_update.json()["metafields"][0]["id"]
-                    metafield_update_url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/metafields/{metafield_id}.json"
-                    payload = {
-                        "metafield": {
-                            "id": metafield_id,
-                            "value": informations,
-                            "type": "multi_line_text_field"
+        if shopify_product:
+            product_id = shopify_product["id"]
+            update_url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products/{product_id.split('/')[-1]}.json"
+            
+            response = requests.put(update_url, headers=get_shopify_headers(), data=json.dumps(product_payload))
+            
+            if response.status_code == 200:
+                frappe.msgprint(f"Shopify product UPDATED for {item_code}")
+                metafield_url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products/{product_id.split('/')[-1]}/metafields.json"
+                metafield_update = requests.get(metafield_url, headers=get_shopify_headers())
+                if metafield_update.status_code == 200:
+                    try:
+                        metafield_id = metafield_update.json()["metafields"][0]["id"]
+                        metafield_update_url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/metafields/{metafield_id}.json"
+                        payload = {
+                            "metafield": {
+                                "id": metafield_id,
+                                "value": informations,
+                                "type": "multi_line_text_field"
+                            }
                         }
-                    }
-                    response = requests.put(metafield_update_url, headers=get_shopify_headers(), data=json.dumps(payload))
-                except:
-                    metafield = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products/{product_id.split('/')[-1]}/metafields.json"
-                    meta_payload = {
-                        "metafield": {
-                            "namespace": "custom",
-                            "key": "specifications",
-                            "value": informations,
-                            "type": "multi_line_text_field"
+                        response = requests.put(metafield_update_url, headers=get_shopify_headers(), data=json.dumps(payload))
+                    except:
+                        metafield = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products/{product_id.split('/')[-1]}/metafields.json"
+                        meta_payload = {
+                            "metafield": {
+                                "namespace": "custom",
+                                "key": "specifications",
+                                "value": informations,
+                                "type": "multi_line_text_field"
+                            }
                         }
-                    }
-                    metafield_creation = requests.post(metafield, headers=get_shopify_headers(), data=json.dumps(meta_payload))
+                        metafield_creation = requests.post(metafield, headers=get_shopify_headers(), data=json.dumps(meta_payload))
 
+            else:
+                frappe.throw(f"Error updating Shopify product: {response.status_code} {response.text}")
         else:
-            frappe.throw(f"Error updating Shopify product: {response.status_code} {response.text}")
-    else:
-        url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products.json"
-        response = requests.post(url, headers=get_shopify_headers(), data=json.dumps(product_payload))
-        
-        if response.status_code == 201:
-            frappe.msgprint(f"Shopify product created for {item_code}")
-            product_data = response.json()["product"]
-            product_id = product_data["id"]
-            metafield = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products/{product_id}/metafields.json"
-            meta_payload = {
-                "metafield": {
-                    "namespace": "custom",
-                    "key": "specifications",
-                    "value": informations,
-                    "type": "multi_line_text_field"
+            url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products.json"
+            response = requests.post(url, headers=get_shopify_headers(), data=json.dumps(product_payload))
+            
+            if response.status_code == 201:
+                frappe.msgprint(f"Shopify product created for {item_code}")
+                product_data = response.json()["product"]
+                product_id = product_data["id"]
+                metafield = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/products/{product_id}/metafields.json"
+                meta_payload = {
+                    "metafield": {
+                        "namespace": "custom",
+                        "key": "specifications",
+                        "value": informations,
+                        "type": "multi_line_text_field"
+                    }
                 }
-            }
-            metafield_creation = requests.post(metafield, headers=get_shopify_headers(), data=json.dumps(meta_payload))
+                metafield_creation = requests.post(metafield, headers=get_shopify_headers(), data=json.dumps(meta_payload))
 
-        else:
-            frappe.throw(f"Error pushing to Shopify: {response.status_code} {response.text}")
-
+            else:
+                frappe.throw(f"Error pushing to Shopify: {response.status_code} {response.text}")
+    except Exception:
+        frappe.log_error(
+            frappe.get_traceback(),
+            f"Shopify Sync Error for {item_code}",
+        )
 
 def find_product_by_sku(sku):
     url = f"{SHOPIFY_STORE_URL}/admin/api/2024-01/graphql.json"
