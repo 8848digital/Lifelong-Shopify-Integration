@@ -3,7 +3,7 @@
 
 # import frappe
 from frappe.model.document import Document
-from lifelong_shopify_integration.lifelong_shopify_integration.customizations.doc_events.utility_functions import sync_between_servers_with_name
+from lifelong_shopify_integration.lifelong_shopify_integration.utils.doc_events.utility_functions import sync_between_servers_with_name
 
 
 class SyncStatusLog(Document):

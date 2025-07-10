@@ -1,7 +1,7 @@
 import frappe
 import requests
 import json
-from lifelong_shopify_integration.lifelong_shopify_integration.customizations.item import push_item_to_shopify
+from lifelong_shopify_integration.lifelong_shopify_integration.customizations.item.doc_events.utility_functions import push_item_to_shopify
 import datetime
 
 def site_details():

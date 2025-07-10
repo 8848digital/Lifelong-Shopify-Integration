@@ -1,4 +1,4 @@
-from lifelong_shopify_integration.lifelong_shopify_integration.customizations.doc_events.utility_functions import transfer_entry
+from lifelong_shopify_integration.lifelong_shopify_integration.utils.doc_events.utility_functions import transfer_entry
 
 def insert_after(self, method=None):
     if self.dt == 'Item':
