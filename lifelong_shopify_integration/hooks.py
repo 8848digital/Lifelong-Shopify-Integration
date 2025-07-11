@@ -139,9 +139,9 @@ app_license = "mit"
 
 doc_events = {
 	"Item": {
-        "after_insert": "lifelong_shopify_integration.lifelong_shopify_integration.customizations.item.doc_events.item.insert_after",
-        "on_update" : "lifelong_shopify_integration.lifelong_shopify_integration.customizations.item.doc_events.item.update",
-        "on_trash" : "lifelong_shopify_integration.lifelong_shopify_integration.customizations.item.doc_events.item.delete",
+        "after_insert": "lifelong_shopify_integration.lifelong_shopify_integration.customizations.item.item.insert_after",
+        "on_update" : "lifelong_shopify_integration.lifelong_shopify_integration.customizations.item.item.update",
+        "on_trash" : "lifelong_shopify_integration.lifelong_shopify_integration.customizations.item.item.delete",
 	},
     # "Custom Field": {
     #     "after_insert": "lifelong_shopify_integration.lifelong_shopify_integration.customizations.custom_fields.insert_after",
